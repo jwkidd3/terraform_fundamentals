@@ -1,0 +1,10 @@
+.idea
+venv
+*.tfstate*
+.terraform
+*.out
+node_modules
+*.log
+pgp_key
+print-users.rtf
+.DS_*
