@@ -47,7 +47,7 @@ Terraform always starts with a workspace called `default`. Let's create a new wo
 that we'll use this command
 
 ```
-terraform workspace new sandox
+terraform workspace new sandbox
 ```
 
 You should see output like this:
