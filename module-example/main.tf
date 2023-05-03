@@ -1,5 +1,5 @@
 module "printer" {
   source = "./my_module"
 
-  thing = "this should be printed"
+  thing = "Yo this is a change!!"
 }

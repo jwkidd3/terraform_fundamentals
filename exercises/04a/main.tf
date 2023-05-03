@@ -5,15 +5,21 @@
 # and you'll see that state is maintained across both machines.
 
 terraform {
-  backend "s3" {
-    bucket = "dws-di-* # change '*' to your student alias and add trailing quote
-    key    = "state/remote-state"
-	region = "us-east-2"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.0"
+    }
   }
 }
 
-provider "aws" {
-  region = "us-west-2"
+provider "aws"{
+  region="us-east-1"
+}
+
+provider "aws"{
+  region="us-west-1"
+  alias="west"
 }
 
 data "aws_ami" "ubuntu" {
@@ -21,7 +27,7 @@ data "aws_ami" "ubuntu" {
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-trusty-14.04-amd64-server-*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
   }
 
   filter {
@@ -35,8 +41,9 @@ data "aws_ami" "ubuntu" {
 resource "aws_instance" "web" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
-
+  
   tags = {
-    Name = "TestInstance"
+    Name = "InstanceOne",
+    class= "terraform"
   }
 }
