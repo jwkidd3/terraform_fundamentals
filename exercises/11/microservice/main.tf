@@ -3,18 +3,19 @@
 # ---------------------------------------------------------------------------------------------------------------------
 
 resource "aws_autoscaling_group" "microservice" {
-  # Note that we intentionally depend on the Launch Configuration name so that creating a new Launch Configuration
-  # (e.g. to deploy a new AMI) creates a new Auto Scaling Group. This will allow for rolling deployments.
-  name                 = "${aws_launch_configuration.microservice.name}"
-  launch_configuration = "${aws_launch_configuration.microservice.name}"
+  name                 = "${aws_launch_template.microservice.name}"
+  launch_template {
+    id      = aws_launch_template.microservice.id
+    version = "$Latest"
+  }
 
-  min_size         = "${var.min_size}"
-  max_size         = "${var.max_size}"
-  desired_capacity = "${var.min_size}"
-  min_elb_capacity = "${var.min_size}"
+  min_size         = var.min_size
+  max_size         = var.max_size
+  desired_capacity = var.min_size
+  min_elb_capacity = var.min_size
 
   # Deploy all the subnets (and therefore AZs) available
-  vpc_zone_identifier = data.aws_subnet_ids.default.ids
+  vpc_zone_identifier = data.aws_subnets.default.ids
 
   # Automatically register this ASG's Instances in the ALB and use the ALB's health check to determine when an Instance
   # needs to be replaced
@@ -38,7 +39,7 @@ resource "aws_autoscaling_group" "microservice" {
   # This needs to be here to ensure the ALB has at least one listener rule before the ASG is created. Otherwise, on the
   # very first deployment, the ALB won't bother doing any health checks, which means min_elb_capacity will not be
   # achieved, and the whole deployment will fail.
-  depends_on = ["aws_alb_listener.http"]
+  depends_on = [aws_alb_listener.http]
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -46,19 +47,15 @@ resource "aws_autoscaling_group" "microservice" {
 # This is a "template" that defines the configuration for each EC2 Instance in the ASG
 # ---------------------------------------------------------------------------------------------------------------------
 
-resource "aws_launch_configuration" "microservice" {
+resource "aws_launch_template" "microservice" {
   name          = "${var.student_alias}-${var.name}"
   image_id      = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.micro"
-  user_data     = "${data.template_file.user_data.rendered}"
+  instance_type = "t3.micro"
+  #user_data     = "${data.template_file.user_data.rendered}"
+  key_name        = var.key_name
+  vpc_security_group_ids = aws_security_group.web_server.*.id
 
-  key_name        = "${var.key_name}"
-  security_groups = aws_security_group.web_server.*.id
-
-  # When used with an aws_autoscaling_group resource, the aws_launch_configuration must set create_before_destroy to
-  # true. Note: as soon as you set create_before_destroy = true in one resource, you must also set it in every resource
-  # that it depends on, or you'll get an error about cyclic dependencies (especially when removing resources).
-  lifecycle {
+ lifecycle {
     create_before_destroy = true
   }
 }
@@ -79,32 +76,23 @@ data "template_file" "user_data" {
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
-# FOR THIS EXAMPLE, WE JUST RUN A PLAIN UBUNTU 16.04 AMI
+# FOR THIS EXAMPLE, WE JUST RUN A PLAIN UBUNTU 20 AMI
 # ---------------------------------------------------------------------------------------------------------------------
 
 data "aws_ami" "ubuntu" {
   most_recent = true
-  owners      = ["099720109477"] # Canonical
+
+ filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+  }
 
   filter {
     name   = "virtualization-type"
     values = ["hvm"]
   }
 
-  filter {
-    name   = "architecture"
-    values = ["x86_64"]
-  }
-
-  filter {
-    name   = "image-type"
-    values = ["machine"]
-  }
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"]
-  }
+  owners = ["099720109477"] # Canonical
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -114,6 +102,7 @@ data "aws_ami" "ubuntu" {
 resource "aws_security_group" "web_server" {
   name   = "${var.student_alias}-${var.name}"
   vpc_id = "${data.aws_vpc.default.id}"
+  
 
   # This is here because aws_launch_configuration.web_servers sets create_before_destroy to true and depends on this
   # resource
@@ -161,7 +150,7 @@ resource "aws_security_group_rule" "web_server_allow_all_outbound" {
 resource "aws_alb" "web_servers" {
   name            = "${var.student_alias}-${var.name}"
   security_groups = aws_security_group.alb.*.id
-  subnets         = data.aws_subnet_ids.default.ids
+  subnets         = data.aws_subnets.default.ids
   internal        = "${var.is_internal_alb}"
 
   # This is here because aws_alb_listener.htp depends on this resource and sets create_before_destroy to true
@@ -209,6 +198,7 @@ resource "aws_alb_target_group" "web_servers" {
   deregistration_delay = 10
 
   health_check {
+    enabled            =false
     path                = "/"
     interval            = 15
     healthy_threshold   = 2
@@ -281,6 +271,9 @@ data "aws_vpc" "default" {
   default = true
 }
 
-data "aws_subnet_ids" "default" {
-  vpc_id = "${data.aws_vpc.default.id}"
+data "aws_subnets" "default" {
+  filter {
+    name = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
 }

@@ -53,4 +53,5 @@ resource "aws_instance" "nginx_server" {
   tags = {
     Name = "nginx-server"
   }
+  
 }

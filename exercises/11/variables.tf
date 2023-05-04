@@ -1,9 +1,11 @@
 variable "aws_region" {
   description = "The region where resources should live"
+  default     = "us-east-1"
 }
 
 variable "student_alias" {
   description = "Your student alias"
+  default     = "user30"
 }
 
 variable "key_name" {
