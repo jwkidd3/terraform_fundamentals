@@ -1,21 +1,4 @@
-# S3 backend example 
-# see https://www.terraform.io/docs/backends/types/s3.html
 
-# Run this from your own machine as well as from your Cloud9 IDE
-# and you'll see that state is maintained across both machines.
-
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 4.0"
-    }
-  }
-}
-
-provider "aws"{
-  region="us-east-1"
-}
 
 provider "aws"{
   region="us-west-1"

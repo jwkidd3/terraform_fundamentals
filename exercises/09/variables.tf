@@ -15,3 +15,7 @@ variable "include_optional_file" {
   type        = bool
   default     = true
 }
+
+variable "aws_region"{
+  
+}

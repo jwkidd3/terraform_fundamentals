@@ -6,3 +6,7 @@ variable "student_alias" {
   default="user30"
   
 }
+
+variable "aws_region"{
+  
+}

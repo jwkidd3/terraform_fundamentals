@@ -8,8 +8,5 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
-
-# declare a resource stanza so we can create something.
-resource "aws_instance" "test" {}

@@ -1,6 +1,3 @@
-provider "aws" {
-  version = "~> 2.0"
-}
 
 variable "student_alias" {
   description = "Your student alias"

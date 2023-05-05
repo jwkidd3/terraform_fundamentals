@@ -4,3 +4,7 @@
 variable "student_alias" {
   description = "Your student alias"
 }
+
+variable "aws_region"{
+  
+}

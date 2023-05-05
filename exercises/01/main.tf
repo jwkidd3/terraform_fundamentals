@@ -1,14 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 4.0"
-    }
-  }
-}
-
-provider "aws" {}
-
 # declare a resource stanza so we can create something, in this case a key pair
 resource "aws_key_pair" "my_key_pair" {
   key_name   = "devint-${var.student_alias}"

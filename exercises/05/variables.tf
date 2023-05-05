@@ -7,3 +7,7 @@ variable "student_alias" {
 variable "region_alt" {
     default = "us-west-2"
 }
+
+variable "aws_region"{
+  
+}
